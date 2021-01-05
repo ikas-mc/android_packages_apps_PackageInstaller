@@ -274,19 +274,24 @@ public final class AppPermissionGroup implements Comparable<AppPermissionGroup> 
                     ? AppOpsManager.permissionToOp(requestedPermissionInfo.name) : null;
 
             final boolean appOpAllowed;
+            //check if ignored
+            final boolean appOpIgnored;
+
             if (appOp == null) {
                 appOpAllowed = false;
+                appOpIgnored = false;
             } else {
-                int appOpsMode = appOpsManager.unsafeCheckOpRaw(appOp,
+                int appOpMode = appOpsManager.unsafeCheckOpRaw(appOp,
                         packageInfo.applicationInfo.uid, packageName);
-                appOpAllowed = appOpsMode == MODE_ALLOWED || appOpsMode == MODE_FOREGROUND;
+                appOpAllowed = appOpMode == MODE_ALLOWED || appOpMode == MODE_FOREGROUND;
+                appOpIgnored = appOpMode == MODE_IGNORED;
             }
 
             final int flags = packageManager.getPermissionFlags(
                     requestedPermission, packageName, userHandle);
 
             Permission permission = new Permission(requestedPermission, requestedPermissionInfo,
-                    granted, appOp, appOpAllowed, flags);
+                    granted, appOp, appOpAllowed, appOpIgnored, flags);
 
             if (requestedPermissionInfo.backgroundPermission != null) {
                 group.mHasPermissionWithBackgroundMode = true;
@@ -673,7 +678,8 @@ public final class AppPermissionGroup implements Comparable<AppPermissionGroup> 
      */
     private boolean setAppOpMode(@NonNull String op, int uid, int mode) {
         int currentMode = mAppOps.unsafeCheckOpRaw(op, uid, mPackageInfo.packageName);
-        if (currentMode == mode) {
+        //don't change op mode when current mode is ignored
+        if (currentMode == mode || currentMode == MODE_IGNORED) {
             return false;
         }
 

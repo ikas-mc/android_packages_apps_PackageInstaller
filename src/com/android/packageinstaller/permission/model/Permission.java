@@ -36,6 +36,7 @@ public final class Permission {
 
     private boolean mGranted;
     private boolean mAppOpAllowed;
+    private boolean mAppOpIgnored;
     private int mFlags;
     private boolean mIsEphemeral;
     private boolean mIsRuntimeOnly;
@@ -44,13 +45,14 @@ public final class Permission {
     private boolean mWhitelisted;
 
     public Permission(String name, @NonNull PermissionInfo permissionInfo, boolean granted,
-            String appOp, boolean appOpAllowed, int flags) {
+            String appOp, boolean appOpAllowed, boolean appOpIgnored, int flags) {
         mPermissionInfo = permissionInfo;
         mName = name;
         mBackgroundPermissionName = permissionInfo.backgroundPermission;
         mGranted = granted;
         mAppOp = appOp;
         mAppOpAllowed = appOpAllowed;
+        mAppOpIgnored = appOpIgnored;
         mFlags = flags;
         mIsEphemeral =
                 (permissionInfo.protectionLevel & PermissionInfo.PROTECTION_FLAG_INSTANT) != 0;
@@ -136,7 +138,7 @@ public final class Permission {
      * @return {@code true} if the permission (and the app-op) is granted.
      */
     public boolean isGrantedIncludingAppOp() {
-        return mGranted && (!affectsAppOp() || isAppOpAllowed()) && !isReviewRequired();
+        return mGranted && (!affectsAppOp() || isAppOpIgnored() || isAppOpAllowed()) && !isReviewRequired();
     }
 
     public boolean isReviewRequired() {
@@ -153,6 +155,10 @@ public final class Permission {
 
     public boolean isAppOpAllowed() {
         return mAppOpAllowed;
+    }
+
+    public boolean isAppOpIgnored() {
+        return mAppOpIgnored;
     }
 
     public boolean isUserFixed() {
